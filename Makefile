@@ -2,7 +2,8 @@
 .DEFAULT_GOAL := $OUT_PATH
 
 ## Vars
-OUT_PATH := bin/$(shell basename $$(pwd))
+BIN_NAME := $(shell basename $$(pwd))
+OUT_PATH := bin/$(BIN_NAME)
 GO_SRC := $(shell find . -type f -name "*.go" -not -path "./vendor/*")
 VENDOR_DIRS := $(shell find vendor/ -mindepth 1 -maxdepth 3 -type d 2>/dev/null | sort | uniq)
 VERSION_FILE := ./version
@@ -61,3 +62,37 @@ set_pre_release:
     else \
 	  ./semver.sh -v "${VERSION}" -r "${P}" > "${VERSION_FILE}"; \
   	fi
+
+push_version:
+
+# Release targets
+.PHONY: release
+release:
+	@echo "Pushing version ${VERSION}"
+	git add version
+	git commit -m "Bump to version ${VERSION}"
+	git tag "${VERSION}"
+	@echo "\n\nVersion bumped in commit $$(git rev-parse HEAD)"
+	@echo "Run the following to push the new version"
+	@echo "\t git push origin main"
+	@echo "\t git push origin ${VERSION}"
+	@echo "\nThe GitHub Actions workflow will then produce a new release"
+	@echo "on GitHub and you can edit the release notes from there."
+
+.PHONY: dist
+dist: ./vendor/
+	if [ -d release ]; then \
+  		rm -rf release; \
+  	fi; \
+	mkdir release; \
+	for os in linux windows darwin; do \
+  		for arch in amd64 arm64; do \
+  		  	GOOS="$${OS}" GOARCH="$${arch}" \
+			go build \
+				-o "release/${BIN_NAME}-${VERSION}-$${os}-$${arch}" \
+				-ldflags="-X 'main.Version=${VERSION}'" \
+				.; \
+  		done \
+  	done; \
+  	tar czf "${BIN_NAME}-${VERSION}.tar.gz" -C release/ .; \
+  	mv "./${BIN_NAME}-${VERSION}.tar.gz" "./release/${BIN_NAME}-${VERSION}.tar.gz"
