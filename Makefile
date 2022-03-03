@@ -27,7 +27,7 @@ go.sum:
 
 ## Test targets
 .PHONY: test
-test:
+test: ./vendor/
 	go test ./...
 
 ## Versioning targets
