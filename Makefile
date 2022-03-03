@@ -1,16 +1,18 @@
 ## Make settings
-.DEFAULT_GOAL := bin/
+.DEFAULT_GOAL := $OUT_PATH
 
 ## Vars
+OUT_PATH := bin/$(shell basename $$(pwd))
 GO_SRC := $(shell find . -type f -name "*.go" -not -path "./vendor/*")
 VENDOR_DIRS := $(shell find vendor/ -mindepth 1 -maxdepth 3 -type d 2>/dev/null | sort | uniq)
 VERSION_FILE := ./version
 VERSION := $(shell cat "${VERSION_FILE}")
 
 ## Build targets
-bin/: $(GO_SRC) ./vendor/ $(VENDOR_DIRS) $(VERSION_FILE)
+$OUT_PATH: $(GO_SRC) ./vendor/ $(VENDOR_DIRS)
+	@echo "Compiling to ${OUT_PATH}"
 	go build \
-		-o bin/ \
+		-o "${OUT_PATH}" \
 		-ldflags="-X 'main.Version=${VERSION}'" \
 		.
 
