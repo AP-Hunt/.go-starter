@@ -7,6 +7,7 @@ VENDOR_DIRS := $(shell find vendor/ -mindepth 1 -maxdepth 3 -type d 2>/dev/null 
 VERSION_FILE := ./version
 VERSION := $(shell cat "${VERSION_FILE}")
 
+## Build targets
 bin/: $(GO_SRC) ./vendor/ $(VENDOR_DIRS) $(VERSION_FILE)
 	go build \
 		-o bin/ \
@@ -21,6 +22,11 @@ go.sum:
 
 ./vendor/: go.mod go.sum
 	go mod vendor
+
+## Test targets
+.PHONY: test
+test:
+	go test ./...
 
 ## Versioning targets
 .PHONY: version
